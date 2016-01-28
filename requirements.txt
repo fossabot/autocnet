@@ -1,6 +1,6 @@
 numpy>=1.10.0
 scipy
-gdal>=2.0
+gdal>=1.11.2
 pvl>=0.2.0
 protobuf==3.0.0b2
 networkx

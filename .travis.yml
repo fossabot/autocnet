@@ -39,7 +39,7 @@ install:
   - pip install coveralls
 
 script:
-  - py.test
+  - nosetests --with-coverage --cover-package=autocnet
 
 after_success:
   - coveralls
@@ -53,3 +53,5 @@ notifications:
             - jwbacker@usgs.gov
         on_success: always
         on_failure: always
+
+
