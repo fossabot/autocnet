@@ -6,7 +6,7 @@ from autocnet.utils.utils import find_in_dict
 from autocnet.spectral.spectra import Spectra
 
 
-#TODO: The spectra should inhert from a SpectraABC, monkey patch smoothing in.
+# TODO: The spectra should inhert from a SpectraABC, monkey patch smoothing in.
 class Spectral_Profiler(object):
 
     """
@@ -16,12 +16,6 @@ class Spectral_Profiler(object):
     spectra : dict
               A dictionary with k as the integer observation id and value
               as a pandas DataFrame.
-    
-    ancillary_data : dataframe
-                     A pandas DataFrame of the parsed ancillary data (PVL label)
-
-    label : object
-            The raw PVL label object
     """
 
     def __init__(self, input_data, cleaned=True, qa_threshold=2000):
@@ -81,13 +75,6 @@ class Spectral_Profiler(object):
                               count=nrows)
             self.ancillary_data = pd.DataFrame(d, columns=columns,
                                                index=np.arange(nrows))
-
-            """
-            print len(columns)
-            for i in range(nrows):
-                d = np.fromstring(indata.read(rowbytes), dtype=rowdtype, count=1)
-                self.ancillary_data.iloc[i] = d[0]
-            """
 
             assert(ncols == len(columns))
 

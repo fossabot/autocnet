@@ -1,5 +1,3 @@
-.. _user-tutorials
-
 Getting Started with AutoCNet
 =============================
 

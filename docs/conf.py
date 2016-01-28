@@ -13,9 +13,21 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sphinx
+import sys
 from unittest.mock import MagicMock
+
+# Check Sphinx version
+if sphinx.__version__ < "1.3":
+    raise RuntimeError("Sphinx 1.3 or newer required")
+
+# Environment variable to know if the docs are being built on rtd.
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+print("Building on ReadTheDocs: {}".format(on_rtd))
+print("Current working directory: {}".format(os.path.abspath(os.curdir)))
+print("Python: {}".format(sys.executable))# Check Sphinx version
+
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -41,7 +53,11 @@ import autocnet
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
+              'sphinx.ext.viewcode', 'sphinx.ext.doctest',
+              'sphinx.ext.autosummary', 'sphinx.ext.graphviz']
+
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -80,7 +96,7 @@ release = autocnet.__version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['build']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -91,17 +107,17 @@ add_function_parentheses = False
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-# add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'vim'
 
 # A list of ignored prefixes for module index sorting.
-# modindex_common_prefix = []
+modindex_common_prefix = ['autocnet.']
 
 # If true, keep warnings as "system message" paragraphs in the built
 # documents.
@@ -112,26 +128,11 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+if on_rtd:
+    html_theme = 'default'
+else:
+    html_theme = 'alabaster'
 
-# Theme options are theme-specific and customize the look and feel of a
-# theme further.  For a list of options available for each theme, see the
-# documentation.
-html_theme_options = {
-    "rightsidebar": "true",
-    "relbarbgcolor": "CornflowerBlue",
-    "sidebartextcolor": "black",
-    "sidebarlinkcolor": "#355f7c",
-    "sidebarbgcolor": "#F2F2F2",
-    "codebgcolor": "AliceBlue",
-    "footerbgcolor": "Black",
-    "externalrefs": "false",
-    "bodyfont": "Optima",
-    "headfont": "Optima "
-}
-
-# Add any paths that contain custom themes here, relative to this directory.
-# html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -143,7 +144,7 @@ html_short_title = "AutoCNet"
 
 # The name of an image file (relative to this directory) to place at the
 # top of the sidebar.
-html_logo = "favicon.png"
+#html_logo = "_static/favicon.png"
 
 # The name of an image file (within the static path) to use as favicon
 # of the docs.  This file should be a Windows icon file (.ico) being
@@ -285,8 +286,13 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
 
+# Intersphinx mapping
+intersphinx_mapping = {'http://docs.python.org/': None,
+                       'http://docs.scipy.org/doc/numpy/': None,
+                      }
 
-
+numpydoc_show_class_members = True
+numpydoc_class_members_toctree = False
 
 class Mock(MagicMock):
     @classmethod
@@ -294,8 +300,10 @@ class Mock(MagicMock):
         return Mock()
 
 # All imported libraries should be added to this mock modules list.
-MOCK_MODULES = ['proj4', 'numpy', 'pandas', 'scipy', 'osgeo', 'cv2',
-                'scikit-image', 'skimage']
+MOCK_MODULES = ['proj4', 'numpy', 'pandas',
+                'scipy', 'scipy.stats', 'scipy.misc',
+                'osgeo', 'cv2',
+                'skimage', 'skimage.feature']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # NumpyDoc Options

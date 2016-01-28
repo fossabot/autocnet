@@ -21,15 +21,25 @@ class CandidateGraph(nx.Graph):
 
     Parameters
     ----------
+    data : object
+          Data to initialize a graph object.  If data is none,
+          an empty graph is created.  Data can be an edge list or
+          any networkx compatible graph object.
+
+    attr : object
+           Variable number of key=value pairs to be added to the graph
+           as attributes
 
     Attributes
+    ----------
     node_counter : int
-                   The number of nodes in the graph. 
+                   The number of nodes in the graph.
+
     node_name_map : dict
                     The mapping of image labels (i.e. file base names) to their
                     corresponding node indices.
 
-    ----------
+
     """
 
     def __init__(self,*args, **kwargs):

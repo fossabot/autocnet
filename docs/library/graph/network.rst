@@ -8,3 +8,4 @@ The :mod:`graph.network` module a graph based representation of image overlaps
 .. automodule:: autocnet.graph.network
    :synopsis:
    :members:
+   :show-inheritance:

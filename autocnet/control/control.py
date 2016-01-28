@@ -5,21 +5,25 @@ import pandas as pd
 POINT_TYPE = 2
 MEASURE_TYPE = 2
 
+
 class CSeries(pd.Series):
     """
     A custom pandas series that can accept additional methods
     """
     @property
     def _constructor(self):
-        return CSeries # pragma: no cover
+        return CSeries  # pragma: no cover
 
 
 class C(pd.DataFrame):
     """
-    Control network.
+    Control network object
 
     Parameters
     ----------
+     : iterable
+       Any construction mechanism that works for a pandas dataframe
+       will work here.
 
     Attributes
     ----------
@@ -63,6 +67,15 @@ class C(pd.DataFrame):
 
     _constructor_sliced = CSeries
 
+    def mock(self):
+        """
+
+        Returns
+        -------
+        : int
+          Two
+        """
+        return 2
     @property
     def n(self):
         if not getattr(self, '_n', None):
@@ -84,9 +97,3 @@ class C(pd.DataFrame):
         if not getattr(self, '_modifieddate', None):
             self._modifieddate = 'Not modified'
         return self._modifieddate
-
-    '''
-    @modifieddate.setter
-    def update_modifieddate(self):
-        self._modifieddate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    '''
