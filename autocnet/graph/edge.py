@@ -11,7 +11,7 @@ from autocnet.matcher import health
 from autocnet.matcher import outlier_detector as od
 from autocnet.matcher import suppression_funcs as spf
 from autocnet.matcher import subpixel as sp
-from autocnet.matcher.feature import FlannMatcher
+from autocnet.matcher.cpu_matcher import FlannMatcher
 from autocnet.transformation.decompose import coupled_decomposition
 from autocnet.transformation.transformations import FundamentalMatrix, Homography
 from autocnet.vis.graph_view import plot_edge, plot_node, plot_edge_decomposition

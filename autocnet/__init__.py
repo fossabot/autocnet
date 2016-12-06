@@ -30,7 +30,7 @@ def cuda(enable=False, gpu=0):
             cs.PyInitCuda(gpu)
 
             # Here is where the GPU methods get patched into the class
-            from autocnet.matcher.cuda_extractor import extract_features 
+            from autocnet.matcher.cuda_extractor import extract_features
             Node._extract_features = staticmethod(extract_features)
 
             from autocnet.matcher.cuda_matcher import match
@@ -41,9 +41,9 @@ def cuda(enable=False, gpu=0):
 
     print('CUDA Disabled')
     # Here is where the CPU methods get patched into the class
-    from autocnet.matcher.feature_extractor import extract_features
+    from autocnet.matcher.cpu_extractor import extract_features
     Node._extract_features = staticmethod(extract_features)
 
-    from autocnet.matcher.feature_matcher import match
+    from autocnet.matcher.cpu_matcher import match
     Edge.match = match
 cuda()
