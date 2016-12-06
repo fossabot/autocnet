@@ -11,6 +11,14 @@ def match(self, ratio=0.8, **kwargs):
     The ratio check is embedded on the cuda side and returned as an
     ambiguity value.  In testing symmetry is not required as it is expensive
     without significant gain in accuracy when using this implementation.
+
+    This is a class method this tightly coupled with the an autocnet Edge.
+
+    Parameters
+    ----------
+    ratio : float
+            Ambiguity values greater than ratio will be masked. Default: 0.8.
+
     """
     s_siftdata = cs.PySiftData.from_data_frame(self.source.get_keypoints(),
 					       self.source.descriptors)
@@ -33,4 +41,4 @@ def match(self, ratio=0.8, **kwargs):
 
     # Set the matches and set the 'ratio' (ambiguity) mask
     self.matches = df
-    self.masks = ('ratio', df['ambiguity'] <= ratio)  
+    self.masks = ('ratio', df['ambiguity'] <= ratio)

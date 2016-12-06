@@ -7,7 +7,6 @@ from scipy.spatial.distance import cdist
 
 import autocnet
 from autocnet.utils import utils
-from autocnet.matcher import health
 from autocnet.matcher import outlier_detector as od
 from autocnet.matcher import suppression_funcs as spf
 from autocnet.matcher import subpixel as sp
@@ -54,9 +53,6 @@ class Edge(dict, MutableMapping):
 
         self._observers = set()
 
-        # Subscribe the heatlh observer
-        self._health = health.EdgeHealth()
-
     def __repr__(self):
         return """
         Source Image Index: {}
@@ -93,10 +89,6 @@ class Edge(dict, MutableMapping):
         boolean_mask = v[1]
         self.masks[column_name] = boolean_mask
 
-    @property
-    def health(self):
-        return self._health.health
-
     def decompose_and_match(self, k=2, maxiteration=3, size=18, buf_dist=3,**kwargs):
         """
         Similar to match, this method first decomposed the image into
@@ -119,15 +111,19 @@ class Edge(dict, MutableMapping):
         maxiteration : int
                        When using coupled decomposition, the number of recursive
                        divisions to apply.  The total number of resultant
-                       sub-images will be 4 ** maxiteration.  Approximate values:
+                       sub-images will be 4 ** maxiteration.
 
-                        | Number of megapixels | maxiteration |
-                        |----------------------|--------------|
-                        | m < 10               |1-2|
-                        | 10 < m < 30          | 3 |
-                        | 30 < m < 100         | 4 |
-                        | 100 < m < 1000       | 5 |
-                        | m > 1000             | 6 |
+                       Approximate Guidelines
+
+                       +----------------------+--------------+
+                       | Number of megapixels | maxiteration |
+                       +======================+==============+
+                       | m < 10               |1 - 2         |
+                       | 10 < m < 30          | 3            |
+                       | 30 < m < 100         | 4            |
+                       | 100 < m < 1000       | 5            |
+                       | m > 1000             | 6            |
+                       +----------------------+--------------+
 
         size : int
                When using coupled decomposition, the total number of points
@@ -141,6 +137,7 @@ class Edge(dict, MutableMapping):
                    partioning point.  The smaller the distance, the more likely
                    percision errors can results in erroneous partitions.
         """
+
         def mono_matches(a, b, aidx=None, bidx=None):
             """
             Apply the FLANN match_features
@@ -459,10 +456,6 @@ class Edge(dict, MutableMapping):
         # Convert the truncated RANSAC mask back into a full length mask
         mask[mask] = self.fundamental_matrix.mask
 
-        # Subscribe the health watcher to the fundamental matrix observable
-        self.fundamental_matrix.subscribe(self._health.update)
-        self.fundamental_matrix._notify_subscribers(self.fundamental_matrix)
-
         # Set the initial state of the fundamental mask in the masks
         self.masks = ('fundamental', mask)
 
@@ -483,7 +476,8 @@ class Edge(dict, MutableMapping):
 
     def compute_homography(self, method='ransac', clean_keys=[], pid=None, **kwargs):
         """
-        For each edge in the (sub) graph, compute the homography
+        For each edge in the (sub) graph, compute H, the homography.
+
         Parameters
         ----------
         outlier_algorithm : object
@@ -492,6 +486,7 @@ class Edge(dict, MutableMapping):
         clean_keys : list
                      of string keys to masking arrays
                      (created by calling outlier detection)
+
         Returns
         -------
         transformation_matrix : ndarray
