@@ -6,7 +6,7 @@ from plio.io import io_hdf
 
 from autocnet.utils import utils
 
-def from_hdf(in_path, key=None):
+def from_hdf(in_path):
     """
     For a given node, load the keypoints and descriptors from a hdf5 file.
 
@@ -32,12 +32,8 @@ def from_hdf(in_path, key=None):
     else:
         hdf = in_path
 
-    if key:
-        outd = '{}/descriptors'.format(key)
-        outk = '{}/keypoints'.format(key)
-    else:
-        outd = '/descriptors'
-        outk = '/keypoints'
+    outd = '/descriptors'
+    outk = '/keypoints'
 
     descriptors = hdf[outd][:]
     raw_kps = hdf[outk][:]
@@ -75,21 +71,12 @@ def to_hdf(keypoints, descriptors, out_path, key=None):
     """
     # If the out_path is a string, access the HDF5 file
     if isinstance(out_path, str):
-        if os.path.exists(out_path):
-            mode = 'a'
-        else:
-            mode = 'w'
-        hdf = io_hdf.HDFDataset(out_path, mode=mode)
+        hdf = io_hdf.HDFDataset(out_path, mode='w')
     else:
         hdf = out_path
 
-    #try:
-    if key:
-        outd = '{}/descriptors'.format(key)
-        outk = '{}/keypoints'.format(key)
-    else:
-        outd = '/descriptors'
-        outk = '/keypoints'
+    outd = '/descriptors'
+    outk = '/keypoints'
     hdf.create_dataset(outd,
                        data=descriptors,
                        compression=io_hdf.DEFAULT_COMPRESSION,

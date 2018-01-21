@@ -26,7 +26,6 @@ from autocnet.io import network as io_network
 from autocnet.vis.graph_view import plot_graph, cluster_plot
 from autocnet.control import control
 
-
 # The total number of pixels squared that can fit into the keys number of GB of RAM for SIFT.
 MAXSIZE = {0: None,
            2: 6250,
@@ -434,7 +433,7 @@ class CandidateGraph(nx.Graph):
             node.extract_features_with_downsampling(downsample_amount, *args, **kwargs)
 
     def extract_features_with_tiling(self, tilesize=1000, overlap=500, *args, **kwargs): #pragma: no cover
-        for node in self.nodes:
+        for i, node in self.nodes(data='data'):
             print('Processing {}'.format(node['image_name']))
             node.extract_features_with_tiling(tilesize=tilesize, overlap=overlap, *args, **kwargs)
 
@@ -1134,8 +1133,13 @@ class CandidateGraph(nx.Graph):
         return True
 
     def footprints(self):
-        geoms = [node.footprint for i, node in self.nodes.data('data')]
-        return gpd.GeoDataFrame(geometry=geoms)
+        geoms = []
+        names = []
+        for i, node in self.nodes.data('data'):
+            geoms.append(node.footprint)
+            names.append(node['image_name'])
+    
+        return gpd.GeoDataFrame(names, geometry=geoms)
 
     def create_control_network(self, clean_keys=[]):
         matches = self.get_matches(clean_keys=clean_keys)

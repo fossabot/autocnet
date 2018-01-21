@@ -1,3 +1,4 @@
+import itertools
 import json
 
 from functools import reduce, singledispatch, update_wrapper
@@ -7,6 +8,41 @@ import pandas as pd
 import networkx as nx
 
 from osgeo import ogr
+
+def tile(array_size, tilesize=1000, overlap=500):
+    stepsize = tilesize - overlap
+    if stepsize < 0:
+        raise ValueError('Overlap can not be greater than tilesize.')
+    # Compute the tiles
+    if tilesize >= array_size[1]:
+        ytiles = [(0, array_size[1])]
+    else:
+        ystarts = range(0, array_size[1], stepsize)
+        ystops = range(tilesize, array_size[1], stepsize)
+        ytiles = list(zip(ystarts, ystops))
+        ytiles.append((ytiles[-1][0] + stepsize, array_size[1]))
+
+    if tilesize >= array_size[0]:
+        xtiles = [(0, array_size[0])]
+    else:
+        xstarts = range(0, array_size[0], stepsize)
+        xstops = range(tilesize, array_size[0], stepsize)
+        xtiles = list(zip(xstarts, xstops))
+        xtiles.append((xtiles[-1][0] + stepsize, array_size[0]))
+    tiles = itertools.product(xtiles, ytiles)
+
+    slices = []
+    for tile in tiles:
+        # xstart, ystart, xcount, ycount
+        xstart = tile[0][0]
+        ystart = tile[1][0]
+        xstop = tile[0][1]
+        ystop = tile[1][1]
+        pixels = [xstart, ystart,
+                  xstop - xstart,
+                  ystop - ystart]
+        slices.append(pixels)
+    return slices
 
 def compare_dicts(d, o):
     """
