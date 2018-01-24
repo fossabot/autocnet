@@ -55,7 +55,7 @@ def data_from_cube(header):
     data['SPACECRAFT_CLOCK_START_COUNT'] = find_in_dict(header, 'SpacecraftClockCount')
     return data
 
-def create_camera(obj, url='http://localhost:5000/api/1.0/missions/mars_reconnaissance_oribter/ctx/csm_isd'):
+def create_camera(obj, url='http://localhost:8002/api/1.0/missions/mars_reconnaissance_oribter/ctx/csm_isd'):
     data = json.dumps(data_from_cube(obj.metadata), cls=NumpyEncoder)
     r = requests.post(url, data=data)
 
