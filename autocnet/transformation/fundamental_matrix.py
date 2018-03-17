@@ -293,6 +293,7 @@ def compute_fundamental_matrix(kp1, kp2, method='mle', reproj_threshold=2.0,
     else:
         raise ValueError("Unknown estimation method. Choices are: 'lme', 'ransac', 'lmeds', '8point', or 'normal'.")
 
+
     # OpenCV wants arrays
     F, mask = cv2.findFundamentalMat(np.asarray(kp1),
                                      np.asarray(kp2),
@@ -347,6 +348,5 @@ def compute_fundamental_matrix(kp1, kp2, method='mle', reproj_threshold=2.0,
 
         mask = update_fundamental_mask(F, kp1, kp2,
                                        threshold=mle_reproj_threshold).values
-
 
     return F, mask

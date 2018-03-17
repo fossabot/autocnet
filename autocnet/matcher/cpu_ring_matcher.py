@@ -74,9 +74,8 @@ def ransac_permute(ref_points, tar_points, tolerance_val, target_points):
     q = (q1*q2).astype(np.int)
     # How many points are within the tolerance?
     s = np.sum(q, axis=1)
-
-    # If the number of points within the tolerance are greater than the number of desired pointsagreed re: scalars in the eqn. Hopefully ge
-    if max(s) > target_points:
+    # If the number of points within the tolerance are greater than the number of desired points
+    if np.max(s) >= target_points:
         m = np.eye(n).dot(target_points + 1)
         for i in range(n):
             for j in range(i):
@@ -196,10 +195,11 @@ def ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_radius=4000, max_r
 
     # Reference and target features
     ref_xy = ref_feats[:,:2]
-    ref_xmym = ref_feats[:,3:]
+    ref_xmym = ref_feats[:,2:4]
     tar_xy = tar_feats[:,:2]
-    tar_xmym = tar_feats[:,3:]
+    tar_xmym = tar_feats[:,2:4]
 
+    print('Ring Matcher Started: ', ref_feats.shape, tar_feats.shape)
     # Boolean mask for those reference points that have already been matched
     ref_mask = np.ones(len(ref_xy), dtype=bool)
 
@@ -225,7 +225,6 @@ def ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_radius=4000, max_r
         current_ref_desc = ref_desc[r]
         current_ref_xy = ref_xy[r]
         current_ref_xmym = ref_xmym[r]
-
         # Compute the euclidean distance between the reference point and all targets
         d = np.linalg.norm(current_ref_xmym - tar_xmym, axis=1)
 
@@ -270,6 +269,7 @@ def ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_radius=4000, max_r
                     ref_points = p[:npoints_in_ring, 4*j:4*j+2] # Slice out the reference coords
                     tar_points = p[:npoints_in_ring, 4*j+2:4*j+4]  # Slice out the target coords
                     indices = p_idx[:npoints_in_ring, 2*j:2*j+2] # slice out the indices
+
                     xref, xtar, idx = ransac_permute(ref_points, tar_points, tolerance_val, target_points)
                     # This selects the best of the rings
                     max_cons = max(max_cons, len(xref))
@@ -281,7 +281,7 @@ def ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_radius=4000, max_r
         # Mask the reference point and iterate to the next randomly selected point
         ref_mask[r] = False
         metr += 1
-    return None, None, None
+    return None, None, None, 'Exhausted'
 
 def directed_ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_min, ring_max, target_points=15, tolerance_value=0.02):
     """
@@ -381,3 +381,153 @@ def directed_ring_match(ref_feats, tar_feats, ref_desc, tar_desc, ring_min, ring
     tar_points = p[:points_num, 2:]
     xref, xtar, idx = ransac_permute(ref_points, tar_points, tolerance_value, target_points)
     return xref, xtar, p_idx[idx]
+
+def ring_match_one(x, y, ref_feats, tar_feats, ref_desc, tar_desc, ring, search_radius=600, max_search_radius=600, target_points=5):
+    """
+    Given an x,y coordinate where a match is desired, find all candidates within
+    some search radius and attempt to generate a match.  If no matches are identified
+    expand the search radius by search_radius and search again. Once a match
+    is identified (by calling the directed matcher and finding a geometric consensus
+    with at least target_points), the match closest to the given x,y is returned.
+
+    Parameters
+    ----------
+    x : int
+        x coordinate in image space
+
+    y : int
+        y coordinate in image space
+
+    ref_feats : np.ndarray
+                where the first 2 columns are the x,y coordinates in pixel space,
+                columns 3 & 4 are the x,y coordinates in m or km in the same
+                reference as the target features
+
+    tar_feats : np.ndarray
+                where the first 2 columns are the x,y coordinates in pixel space,
+                columns 3 & 4 are the x,y coordinates in m or km in the same
+                reference as the reference features
+
+    ref_desc : np.ndarray
+               (m, n) where m are the individual SIFT features and
+               n are the descriptor length (usually 128)
+
+    tar_desc : np.ndarray
+               (m, n) where m are the individual SIFT features and
+               n are the descriptor length (usually 128)
+
+    ring : tuple
+           in the form (min_ring, max_ring)
+
+    search_radius : numeric
+                    The radius of the search extent in image pixels
+
+    target_points : int
+                    The desired number of points to identify a correspondence
+    """
+    search = True
+
+    # Start search within search_radius of the center of the cell
+    while search_radius <= max_search_radius:
+        # Find all correspondences within 100m of the center of the cell to fill
+        candidates = np.where((np.abs(ref_feats[:,0]-y) < search_radius) &\
+                              (np.abs(ref_feats[:,1]-x) < search_radius))[0]
+
+        sref_feats = ref_feats[candidates]
+        sref_desc = ref_desc[candidates]
+
+        min_ring = ring[0]
+        max_ring = ring[1]
+
+        sx_ref, sx_tar, sindices, = directed_ring_match(sref_feats, tar_feats, sref_desc, tar_desc, min_ring, max_ring, target_points=target_points)
+        if len(sindices) >= target_points:
+
+            #sindices[:,0] = candidates[sindices[:,0]]
+
+            # Find the match that is closest to the center of the cell.
+            center = np.array([x, y])
+            ref_coords = sref_feats[sindices[:,0], :2]
+            dist = np.linalg.norm(center - ref_coords, axis=1)
+            closest_idx = np.argmin(dist)
+
+            # Remap the reference from the subset to the full set
+            sindices[:,0] = candidates[sindices[:,0]]
+
+            return sindices[closest_idx]
+
+        # expand the search radius by 100m
+        search_radius += search_radius
+        if search_radius >= max_search_radius:
+            return []
+
+def add_correspondences(in_feats, ref_feats, tar_feats, ref_desc, tar_desc,  xextent, yextent, ring, n_x_cells=5, n_y_cells=5, target_points=5, **kwargs):
+    """
+    Given a set of input features and x/y extents lay a regular grid over the area
+    defined by the extents and find correspondences within each grid cell that
+    does not have any existing correspondences.
+
+    Then number of cells are defined by the n_x/y_cells parameters.
+
+    Parameters
+    ----------
+    in_feats : ndarray
+               (n,m) input features with the first column being x-coordinate
+               in image space and the second column being y-coordinate.
+
+    ref_feats : np.ndarray
+                where the first 2 columns are the x,y coordinates in pixel space,
+                columns 3 & 4 are the x,y coordinates in m or km in the same
+                reference as the target features
+
+    tar_feats : np.ndarray
+                where the first 2 columns are the x,y coordinates in pixel space,
+                columns 3 & 4 are the x,y coordinates in m or km in the same
+                reference as the reference features
+
+    ref_desc : np.ndarray
+               (m, n) where m are the individual SIFT features and
+               n are the descriptor length (usually 128)
+
+    tar_desc : np.ndarray
+               (m, n) where m are the individual SIFT features and
+               n are the descriptor length (usually 128)
+
+    xextent : tuple
+              in the form (minx, maxx)
+
+    yextent : tuple
+              in the form (miny, maxy)
+
+    ring : tuple
+           in the form (min_ring, max_ring)
+
+    n_x_cells : int
+                the number of cells to generate in the x direction
+
+    n_y_cells : int
+                the number of cells to generate in the y direction
+
+    target_points : int
+                    The desired number of points to identify a correspondence
+    """
+    x_edges = np.linspace(xextent[0], xextent[1], n_x_cells)
+    y_edges = np.linspace(yextent[0], yextent[1], n_y_cells)
+
+    # Find the cells that are populated and assign as covered
+    xbins = np.digitize(in_feats[:,1], bins=x_edges)
+    ybins = np.digitize(in_feats[:,0], bins=y_edges)
+    covered = list(zip(xbins, ybins))
+
+    refs_to_add = []
+    # Loop over all cells
+    for i in range(1, n_x_cells):
+        for j in range(1, n_y_cells):
+            # and process only the uncovered cells
+            if (i,j) in covered:
+                continue
+            x_cell_center = x_edges[i-1] + (x_edges[i] - x_edges[i-1])/2
+            y_cell_center = y_edges[j-1] + (y_edges[j] - y_edges[j-1])/2
+
+            ref = ring_match_one(x_cell_center, y_cell_center, ref_feats, tar_feats, ref_desc, tar_desc, ring, **kwargs)
+            refs_to_add.append(ref)
+    return refs_to_add
