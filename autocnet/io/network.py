@@ -75,6 +75,10 @@ def save(network, projectname):
                     ndarrays_to_write[k] = v
                     ndarrays_to_write[k+'_idx'] = v.index
                     ndarrays_to_write[k+'_columns'] = v.columns
+            # Handle the matches dataframe that is a property
+            ndarrays_to_write['matches'] = data.matches
+            ndarrays_to_write['matches_idx'] = data.matches.index
+            ndarrays_to_write['matches_columns'] = data.matches.columns
             np.savez('{}_{}.npz'.format(s, d),**ndarrays_to_write)
             pzip.write('{}_{}.npz'.format(s, d))
             os.remove('{}_{}.npz'.format(s, d))
@@ -134,6 +138,7 @@ def load(projectname):
                 di = e
             # Read the data and populate edge attrs
             for k, v in di.items():
+                print(k)
                 if k == 'target' or k == 'source':
                     continue
                 edge[k] = v
