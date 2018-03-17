@@ -353,7 +353,7 @@ class Node(dict, MutableMapping):
             array = self.geodata.read_array(pixels=s)
             self.extract_features(array, xystart, *args, **kwargs)
 
-    def load_features(self, in_path, format='npy'):
+    def load_features(self, in_path, format='npy', **kwargs):
         """
         Load keypoints and descriptors for the given image
         from a HDF file.
@@ -368,8 +368,7 @@ class Node(dict, MutableMapping):
         if format == 'npy':
             keypoints, descriptors = io_keypoints.from_npy(in_path)
         elif format == 'hdf':
-            keypoints, descriptors = io_keypoints.from_hdf(in_path,
-                                                           key=self['image_name'])
+            keypoints, descriptors = io_keypoints.from_hdf(in_path, **kwargs)
 
         self.keypoints = keypoints
         self.descriptors = descriptors
