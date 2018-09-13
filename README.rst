@@ -32,6 +32,8 @@ Installation Instructions
 We suggest using Anaconda Python to install Autocnet within a virtual environment.  These steps will walk you through the process.
 
 #. [Download](https://www.continuum.io/downloads) and install the Python 3.x Miniconda installer.  Respond ``Yes`` when
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fjlaura%2Fautocnet.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fjlaura%2Fautocnet?ref=badge_shield)
+
    prompted to add conda to your BASH profile.  
 #. (Optional) We like to sequester applications in their own environments to avoid any dependency conflicts.  To do this:
    
@@ -48,3 +50,7 @@ We suggest using Anaconda Python to install Autocnet within a virtual environmen
    * ``conda config --env --add channels menpo``
    * ``conda config --env --add channels usgs-astrogeology``
 #. Finally, install autocnet: ``conda install autocnet``
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fjlaura%2Fautocnet.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fjlaura%2Fautocnet?ref=badge_large)
